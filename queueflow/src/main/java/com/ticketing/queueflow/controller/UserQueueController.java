@@ -2,6 +2,7 @@ package com.ticketing.queueflow.controller;
 
 import com.ticketing.queueflow.dto.AllowUserResponse;
 import com.ticketing.queueflow.dto.AllowedUserResponse;
+import com.ticketing.queueflow.dto.RankUserResponse;
 import com.ticketing.queueflow.dto.RegisterUserResponse;
 import com.ticketing.queueflow.service.UserQueueService;
 import lombok.RequiredArgsConstructor;
@@ -34,4 +35,12 @@ public class UserQueueController {
         return userQueueService.isAllowed(queue, userId)
                 .map(AllowedUserResponse::new);
     }
+
+    @GetMapping("/rank")
+    public Mono<RankUserResponse> getRank(@RequestParam(name = "queue", defaultValue = "default") String queue,
+                                          @RequestParam(name = "user_id") Long userId) {
+        return userQueueService.getRank(queue, userId)
+                .map(RankUserResponse::new);
+    }
+
 }

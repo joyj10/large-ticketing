@@ -131,4 +131,29 @@ class UserQueueServiceTest {
                 .expectNext(true)
                 .verifyComplete();
     }
+
+    @DisplayName("요청 사용자의 대기 순번을 알려준다.")
+    @Test
+    void getRank() {
+        StepVerifier.create(
+                userQueueService.registerWaitQueue("default", 100L)
+                        .then(userQueueService.getRank("default", 100L)))
+                .expectNext(1L)
+                .verifyComplete();
+
+        StepVerifier.create(
+                        userQueueService.registerWaitQueue("default", 101L)
+                                .then(userQueueService.getRank("default", 101L)))
+                .expectNext(2L)
+                .verifyComplete();
+    }
+
+
+    @DisplayName("요청 사용자의 대기 순번이 없는 경우 -1이 리턴 된다.")
+    @Test
+    void emptyRank() {
+        StepVerifier.create(userQueueService.getRank("default", 100L))
+                .expectNext(-1L)
+                .verifyComplete();
+    }
 }
