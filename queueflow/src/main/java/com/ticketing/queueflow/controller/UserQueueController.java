@@ -6,8 +6,12 @@ import com.ticketing.queueflow.dto.RankUserResponse;
 import com.ticketing.queueflow.dto.RegisterUserResponse;
 import com.ticketing.queueflow.service.UserQueueService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,12 +39,28 @@ public class UserQueueController {
         return userQueueService.isAllowed(queue, userId)
                 .map(AllowedUserResponse::new);
     }
-
     @GetMapping("/rank")
     public Mono<RankUserResponse> getRank(@RequestParam(name = "queue", defaultValue = "default") String queue,
                                           @RequestParam(name = "user_id") Long userId) {
         return userQueueService.getRank(queue, userId)
                 .map(RankUserResponse::new);
+    }
+
+    @GetMapping("/touch")
+    public Mono<?> touch(@RequestParam(name = "queue", defaultValue = "default") String queue,
+                         @RequestParam(name = "user_id") Long userId,
+                         ServerWebExchange exchange) {
+        return Mono.defer(() -> userQueueService.generateToken(queue, userId))
+                .map(token -> {
+                    exchange.getResponse().addCookie(
+                            ResponseCookie
+                                    .from("user-queue-%s-%d".formatted(queue), token)
+                                    .maxAge(Duration.ofSeconds(300))
+                                    .path("/")
+                                    .build()
+                    );
+                    return token;
+                });
     }
 
 }
