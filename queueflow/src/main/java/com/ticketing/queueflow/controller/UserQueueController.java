@@ -35,10 +35,12 @@ public class UserQueueController {
 
     @GetMapping("/allowed")
     public Mono<AllowedUserResponse> isAllowedUser(@RequestParam(name = "queue", defaultValue = "default") String queue,
-                                 @RequestParam(name = "user_id") Long userId) {
-        return userQueueService.isAllowed(queue, userId)
+                                                   @RequestParam(name = "user_id") Long userId,
+                                                   @RequestParam(name = "token") String token) {
+        return userQueueService.isAllowedByToken(queue, userId, token)
                 .map(AllowedUserResponse::new);
     }
+
     @GetMapping("/rank")
     public Mono<RankUserResponse> getRank(@RequestParam(name = "queue", defaultValue = "default") String queue,
                                           @RequestParam(name = "user_id") Long userId) {
@@ -47,14 +49,14 @@ public class UserQueueController {
     }
 
     @GetMapping("/touch")
-    public Mono<?> touch(@RequestParam(name = "queue", defaultValue = "default") String queue,
-                         @RequestParam(name = "user_id") Long userId,
-                         ServerWebExchange exchange) {
+    Mono<?> touch(@RequestParam(name = "queue", defaultValue = "default") String queue,
+                  @RequestParam(name = "user_id") Long userId,
+                  ServerWebExchange exchange) {
         return Mono.defer(() -> userQueueService.generateToken(queue, userId))
                 .map(token -> {
                     exchange.getResponse().addCookie(
                             ResponseCookie
-                                    .from("user-queue-%s-%d".formatted(queue), token)
+                                    .from("user-queue-%s-token".formatted(queue), token)
                                     .maxAge(Duration.ofSeconds(300))
                                     .path("/")
                                     .build()
@@ -62,5 +64,4 @@ public class UserQueueController {
                     return token;
                 });
     }
-
 }
